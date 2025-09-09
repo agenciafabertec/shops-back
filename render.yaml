@@ -3,12 +3,18 @@ services:
     name: shops-backend
     env: python
     plan: free
+    # Se o seu manage.py NÃO estiver na raiz do repo, descomente e ajuste:
+    # rootDir: shops-backend
     buildCommand: |
       pip install -r requirements.txt
       python manage.py collectstatic --noinput
     startCommand: |
       python manage.py migrate --noinput && gunicorn core.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120 --preload
+    healthCheckPath: /admin/login/
+    autoDeploy: true
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
       - key: DJANGO_SECRET_KEY
         generateValue: true
       - key: DJANGO_DEBUG
@@ -19,8 +25,6 @@ services:
         fromDatabase:
           name: shops-db
           property: connectionString
-    healthCheckPath: /admin/login/
-    autoDeploy: true
 
 databases:
   - name: shops-db
