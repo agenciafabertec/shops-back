@@ -72,13 +72,26 @@ TEMPLATES = [
 ]
 
 # --- Banco (Render usa DATABASE_URL; local cai em SQLite) ---
-DATABASES = {
-    "default": dj_database_url.parse(
-        os.environ.get("DATABASE_URL", f"sqlite:///{BASE_DIR/'db.sqlite3'}"),
-        conn_max_age=600,
-        ssl_require=os.environ.get("REQUIRE_DB_SSL", "1") == "1",
-    )
-}
+DATABASE_URL = os.environ.get("DATABASE_URL", "")
+
+if DATABASE_URL:
+    # Produção (Render): Postgres via DATABASE_URL
+    is_pg = DATABASE_URL.startswith(("postgres://", "postgresql://"))
+    DATABASES = {
+        "default": dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=is_pg and os.environ.get("REQUIRE_DB_SSL", "1") == "1",
+        )
+    }
+else:
+    # Desenvolvimento local: SQLite (sem sslmode)
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 # --- Arquivos estáticos (admin CSS/JS) ---
 STATIC_URL = "/static/"
